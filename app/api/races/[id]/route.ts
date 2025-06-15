@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getRedisClient } from "@/lib/redis";
+import { Race } from "@/types";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -21,7 +22,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
     const { id } = await params;
 
-    const raceIndex = races.findIndex((r) => r.id === id);
+    const raceIndex = races.findIndex((r: Race) => r.id === id);
 
     if (raceIndex === -1) {
       return new Response(JSON.stringify({ error: "Race not found" }), {
