@@ -125,7 +125,7 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
             <div className={surface === "Wet" ? "text-blue-600" : "text-orange-600"}>{surface}</div>
           </DialogTitle>
           <div className="mx-auto text-center">
-            <div className=" mb-3 mx-auto outline-2 outline-red-300 bg-red-50 text-red-700 rounded-md px-4 py-1 text-6xl">
+            <div className=" mb-3 mx-auto outline-2 outline-black bg-orange-400 text-black rounded-md px-4 py-1 text-6xl">
               {defaultValue.time}
             </div>
             <div className="flex justify-center mt-8">
