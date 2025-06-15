@@ -1,59 +1,70 @@
 import { randomUUID } from "crypto";
-import path from "path";
-import fs from "fs/promises";
-import { Race } from "@/types";
+
+import { getRedisClient } from "@/lib/redis";
 
 export async function GET() {
   try {
-    const filePath = path.join(process.cwd(), "app/api/races/races.json");
-    const fileContents = await fs.readFile(filePath, "utf-8");
-    const races = JSON.parse(fileContents);
+    const redis = getRedisClient();
+
+    const racesString = await redis.get("races");
+
+    if (!racesString) {
+      return new Response(JSON.stringify({ error: "No race data found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const races = JSON.parse(racesString);
 
     return new Response(JSON.stringify(races), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Failed to read races.json:", error);
-    return new Response(JSON.stringify({ error: "Failed to read race data" }), { status: 500 });
+    console.error("Failed to read races from Redis:", error);
+    return new Response(JSON.stringify({ error: "Failed to read race data" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    // Parse the request body
     const body = await request.json();
 
     const haveAllValues = Object.values(body).every((value) => Boolean(value));
     if (!haveAllValues) {
-      return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
+      return new Response(JSON.stringify({ error: "Missing required fields" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // Path to the JSON file
-    const filePath = path.join(process.cwd(), "app/api/races/races.json");
+    const redis = getRedisClient();
 
-    // Read existing races
-    const fileContent = await fs.readFile(filePath, "utf-8");
-    const races = JSON.parse(fileContent) as Race[];
+    const racesString = await redis.get("races");
+    const races = racesString ? JSON.parse(racesString) : [];
 
-    // Create new race entry, generating a new ID
-    const newRace: Race = {
-      id: randomUUID(), // generate a new UUID
+    const newRace = {
+      id: randomUUID(),
       ...body,
     };
 
-    // Add new race to the array
     races.push(newRace);
 
-    // Write updated races back to file
-    await fs.writeFile(filePath, JSON.stringify(races, null, 2), "utf-8");
+    await redis.set("races", JSON.stringify(races));
 
     return new Response(JSON.stringify(newRace), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Failed to update races.json:", error);
-    return new Response(JSON.stringify({ error: "Failed to update race data" }), { status: 500 });
+    console.error("Failed to update races in Redis:", error);
+    return new Response(JSON.stringify({ error: "Failed to update race data" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }

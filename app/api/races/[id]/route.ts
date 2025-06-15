@@ -1,7 +1,5 @@
 import { NextRequest } from "next/server";
-import { Race } from "@/types"; // adjust your Race type import
-import path from "path";
-import { promises as fs } from "fs";
+import { getRedisClient } from "@/lib/redis";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -12,12 +10,14 @@ export async function PUT(request: NextRequest, { params }: Params) {
     if (!updatedRace) {
       return new Response(JSON.stringify({ error: "Missing updated race object!" }), {
         status: 400,
+        headers: { "Content-Type": "application/json" },
       });
     }
 
-    const filePath = path.join(process.cwd(), "app/api/races/races.json");
-    const fileContent = await fs.readFile(filePath, "utf-8");
-    const races = JSON.parse(fileContent) as Race[];
+    const redis = getRedisClient();
+
+    const racesString = await redis.get("races");
+    const races = racesString ? JSON.parse(racesString) : [];
 
     const { id } = await params;
 
@@ -26,19 +26,23 @@ export async function PUT(request: NextRequest, { params }: Params) {
     if (raceIndex === -1) {
       return new Response(JSON.stringify({ error: "Race not found" }), {
         status: 404,
+        headers: { "Content-Type": "application/json" },
       });
     }
 
     races[raceIndex] = updatedRace;
 
-    await fs.writeFile(filePath, JSON.stringify(races, null, 2), "utf-8");
+    await redis.set("races", JSON.stringify(races));
 
     return new Response(JSON.stringify(races[raceIndex]), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("Failed to update race:", error);
-    return new Response(JSON.stringify({ error: "Failed to update race data" }), { status: 500 });
+    console.error("Failed to update race in Redis:", error);
+    return new Response(JSON.stringify({ error: "Failed to update race data" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
