@@ -9,8 +9,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Loader2 } from 'lucide-react';
+import { Trash2, X, Check, Loader2 } from 'lucide-react';
 import { Race } from '@/types';
+import { useState } from 'react';
 
 interface RaceTableProps {
   onRowClick: (race: Race) => void;
@@ -25,6 +26,27 @@ export const RaceTable = ({
   races,
   loading,
 }: RaceTableProps) => {
+  /** If not null, this row is showing the confirm / cancel buttons. */
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+
+  /* ── helpers ─────────────────────────────────────────── */
+  const startConfirm = (e: React.MouseEvent, raceId: string) => {
+    e.stopPropagation();
+    setConfirmingId(raceId);
+  };
+
+  const cancelConfirm = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConfirmingId(null);
+  };
+
+  const confirmDelete = (e: React.MouseEvent, raceId: string) => {
+    e.stopPropagation();
+    onDelete(raceId);
+    setConfirmingId(null);
+  };
+
+  /* ── render ──────────────────────────────────────────── */
   return (
     <div className="relative">
       <Table className="rounded-md overflow-hidden">
@@ -58,6 +80,8 @@ export const RaceTable = ({
         <TableBody className={loading ? 'h-10' : 'h-auto'}>
           {races.map((race, index) => {
             const isLastRow = index === races.length - 1;
+            const isConfirming = confirmingId === race.id;
+
             return (
               <TableRow
                 key={race.id}
@@ -95,18 +119,35 @@ export const RaceTable = ({
                   className={`border-1 text-center border-black w-10 ${
                     isLastRow ? 'rounded-br-md' : ''
                   }`}
+                  onClick={(e) => e.stopPropagation()} // keep row click from firing
                 >
-                  <Button
-                    className=" hover:bg-transparent cursor-pointer"
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation(); // keep row click from firing
-                      onDelete(race.id!);
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4 text-red-600" />
-                  </Button>
+                  {isConfirming ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={cancelConfirm}
+                      >
+                        <X className="w-4 h-4 text-red-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => confirmDelete(e, race.id!)}
+                      >
+                        <Check className="w-4 h-4 text-green-600" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      className="hover:bg-transparent"
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => startConfirm(e, race.id!)}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-600" />
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             );
