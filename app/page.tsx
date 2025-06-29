@@ -9,15 +9,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
 import { Button } from '@/components/ui/button';
 
 import { categoriesWithCars, countriesWithStages } from './data';
-
 import { Race } from '@/types';
 import { RaceDialog } from '@/components/race-dialog';
 import { API_URL } from './constants';
 import { RaceTable } from '@/components/race-table';
+import { Input } from '@/components/ui/input';
 
 export default function Home() {
   const [races, setRaces] = useState<Race[]>([]);
@@ -31,11 +30,14 @@ export default function Home() {
   const [carClassFilter, setCarClassFilter] = useState('');
   const [carFilter, setCarFilter] = useState('');
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   const clearFilters = () => {
     setCountryFilter('');
     setStageFilter('');
     setCarClassFilter('');
     setCarFilter('');
+    setSearchQuery('');
   };
 
   const carsPerClass =
@@ -73,25 +75,29 @@ export default function Home() {
     car: carFilter,
   };
 
-  const filteredRaces = races.filter((race) =>
-    Object.entries(filters).every(
-      ([key, value]) => !value || race[key as keyof typeof race] === value,
-    ),
-  );
+  const filteredRaces = races.filter((race) => {
+    // 1️⃣ all dropdown filters must match (or be empty)
+    const matchFilters = Object.entries(filters).every(
+      ([key, value]) => !value || race[key as keyof Race] === value,
+    );
+
+    // 2️⃣ search must match at least one field
+    const q = searchQuery.trim().toLowerCase();
+    const matchSearch =
+      q === '' ||
+      Object.values(race).some((val) => String(val).toLowerCase().includes(q));
+
+    return matchFilters && matchSearch;
+  });
 
   const onDelete = async (raceId: string) => {
     try {
       setLoading(true);
-
-      const res = await fetch(`${API_URL}/${raceId}`, {
-        method: 'DELETE',
-      });
-
+      const res = await fetch(`${API_URL}/${raceId}`, { method: 'DELETE' });
       if (!res.ok) {
         const { error } = await res.json().catch(() => ({}));
         throw new Error(error || 'Failed to delete race');
       }
-
       fetchRaces();
     } catch (err) {
       console.error('Error deleting race:', err);
@@ -117,6 +123,14 @@ export default function Home() {
             >
               ADD
             </Button>
+          </div>
+          <div className="mb-4">
+            <Input
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-gray-200"
+            />
           </div>
           <div className="flex gap-2 mb-4">
             <Select
@@ -193,7 +207,11 @@ export default function Home() {
             </Select>
             <Button
               disabled={
-                !countryFilter && !stageFilter && !carClassFilter && !carFilter
+                !countryFilter &&
+                !stageFilter &&
+                !carClassFilter &&
+                !carFilter &&
+                !searchQuery
               }
               variant="warning"
               onClick={clearFilters}

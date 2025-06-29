@@ -76,13 +76,14 @@ export const RaceDialog = ({
       if (!res.ok) {
         throw new Error(`Failed to add race`);
       }
-
-      onConfirm();
+      // to make sure the race is surely added
+      setTimeout(() => {
+        setLoading(false);
+        setOpen(false);
+        onConfirm();
+      }, 300);
     } catch (err) {
       console.error('Error adding/updating race:', err);
-    } finally {
-      setLoading(false);
-      setOpen(false);
     }
   };
 
@@ -101,12 +102,14 @@ export const RaceDialog = ({
         throw new Error(`Failed to edit race`);
       }
 
-      onConfirm();
+      // to make sure the race is surely added
+      setTimeout(() => {
+        setLoading(false);
+        setOpen(false);
+        onConfirm();
+      }, 300);
     } catch (err) {
       console.error('Error editing race:', err);
-    } finally {
-      setLoading(false);
-      setOpen(false);
     }
   };
 
