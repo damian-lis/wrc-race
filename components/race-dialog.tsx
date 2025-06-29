@@ -4,7 +4,7 @@ import {
   DialogContent,
   DialogFooter,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 import {
   Select,
@@ -12,75 +12,88 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
-import { TimeInput } from "@/components/time-input";
-import { useEffect, useState } from "react";
-import { Race } from "@/types";
-import { categoriesWithCars, countriesWithStages } from "@/app/data";
-import { API_URL } from "@/app/constants";
+import { TimeInput } from '@/components/time-input';
+import { useEffect, useState } from 'react';
+import { Race } from '@/types';
+import { categoriesWithCars, countriesWithStages } from '@/app/data';
+import { API_URL } from '@/app/constants';
 
 interface RaceDialogProps {
-  onConfirm: (race: Race) => void;
+  onConfirm: () => void;
   defaultValue?: Race;
   setOpen: (open: boolean) => void;
   open: boolean;
 }
 
-export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialogProps) => {
-  const [country, setCountry] = useState("");
-  const [stage, setStage] = useState("");
-  const [carClass, setCarClass] = useState("");
-  const [car, setCar] = useState("");
-  const [surface, setSurface] = useState("");
-  const [time, setTime] = useState("");
+export const RaceDialog = ({
+  onConfirm,
+  defaultValue,
+  open,
+  setOpen,
+}: RaceDialogProps) => {
+  const [country, setCountry] = useState('');
+  const [stage, setStage] = useState('');
+  const [carClass, setCarClass] = useState('');
+  const [car, setCar] = useState('');
+  const [surface, setSurface] = useState('');
+  const [time, setTime] = useState('');
+
+  const [loading, setLoading] = useState(false);
 
   const stagesWithDistancePerCountry = (
-    countriesWithStages.find((countryWithStages) => country === countryWithStages.country)
-      ?.stages || []
+    countriesWithStages.find(
+      (countryWithStages) => country === countryWithStages.country,
+    )?.stages || []
   ).map((item) => `${item.name} (${item.distance} km)`);
 
-  const carsPerClass = categoriesWithCars.find((car) => carClass === car.category)?.cars || [];
+  const carsPerClass =
+    categoriesWithCars.find((car) => carClass === car.category)?.cars || [];
 
   const clearFields = () => {
-    setCountry("");
-    setStage("");
-    setCarClass("");
-    setCar("");
-    setSurface("");
-    setTime("");
+    setCountry('');
+    setStage('');
+    setCarClass('');
+    setCar('');
+    setSurface('');
+    setTime('');
   };
 
   const addRace = async (race: Race) => {
-    onConfirm(race);
-
     try {
+      setLoading(true);
       const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(race),
       });
 
       if (!res.ok) {
         throw new Error(`Failed to add race`);
       }
-    } catch (err) {
-      console.error("Error adding/updating race:", err);
-    }
 
-    setOpen(false);
+      onConfirm();
+    } catch (err) {
+      console.error('Error adding/updating race:', err);
+    } finally {
+      setLoading(false);
+      setOpen(false);
+    }
   };
 
   const editRace = async (race: Race) => {
     const updatedRace = { id: defaultValue?.id, ...race };
 
     try {
+      setLoading(true);
       const res = await fetch(`${API_URL}/${updatedRace.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedRace),
       });
 
@@ -88,12 +101,13 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
         throw new Error(`Failed to edit race`);
       }
 
-      onConfirm(updatedRace);
+      onConfirm();
     } catch (err) {
-      console.error("Error editing race:", err);
+      console.error('Error editing race:', err);
+    } finally {
+      setLoading(false);
+      setOpen(false);
     }
-
-    setOpen(false);
   };
 
   useEffect(() => {
@@ -107,7 +121,7 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
       setCarClass(defaultValue.carClass);
       setCar(defaultValue.car);
       setSurface(defaultValue.surface);
-      setTime("");
+      setTime('');
     }
   }, [defaultValue, open]);
 
@@ -122,14 +136,24 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
             <div className="my-1">
               {carClass} {car}
             </div>
-            <div className={surface === "Wet" ? "text-blue-600" : "text-orange-600"}>{surface}</div>
+            <div
+              className={
+                surface === 'Wet' ? 'text-blue-600' : 'text-orange-600'
+              }
+            >
+              {surface}
+            </div>
           </DialogTitle>
           <div className="mx-auto text-center">
             <div className=" mb-3 mx-auto outline-2 outline-black bg-orange-400 text-black rounded-md px-4 py-1 text-6xl">
               {defaultValue.time}
             </div>
             <div className="flex justify-center mt-8">
-              <TimeInput value={time} onChange={setTime} className="scale-[1.5]" />
+              <TimeInput
+                value={time}
+                onChange={setTime}
+                className="scale-[1.5]"
+              />
             </div>
           </div>
           <DialogFooter className="pt-4 ">
@@ -138,7 +162,7 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
                 <Button variant="outline">Close</Button>
               </DialogClose>
               <Button
-                disabled={time.length < 9}
+                disabled={time.length < 9 || loading}
                 onClick={() => {
                   const newRace = {
                     ...defaultValue,
@@ -153,7 +177,14 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
                   editRace(newRace);
                 }}
               >
-                Update
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Updating...
+                  </span>
+                ) : (
+                  'Update'
+                )}
               </Button>
             </div>
           </DialogFooter>
@@ -174,7 +205,7 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
               value={country}
               onValueChange={(item) => {
                 setCountry(item);
-                setStage("");
+                setStage('');
               }}
             >
               <SelectTrigger className="w-full">
@@ -195,7 +226,11 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
           {defaultValue ? (
             stage
           ) : (
-            <Select disabled={!country || !!defaultValue} value={stage} onValueChange={setStage}>
+            <Select
+              disabled={!country || !!defaultValue}
+              value={stage}
+              onValueChange={setStage}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
@@ -221,7 +256,7 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
               value={carClass}
               onValueChange={(item) => {
                 setCarClass(item);
-                setCar("");
+                setCar('');
               }}
             >
               <SelectTrigger className="w-full">
@@ -242,7 +277,11 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
           {defaultValue ? (
             car
           ) : (
-            <Select disabled={!carClass || !!defaultValue} value={car} onValueChange={setCar}>
+            <Select
+              disabled={!carClass || !!defaultValue}
+              value={car}
+              onValueChange={setCar}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
@@ -261,7 +300,11 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
           {defaultValue ? (
             surface
           ) : (
-            <Select value={surface} disabled={!!defaultValue} onValueChange={setSurface}>
+            <Select
+              value={surface}
+              disabled={!!defaultValue}
+              onValueChange={setSurface}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select" />
               </SelectTrigger>
@@ -284,7 +327,15 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
               <Button variant="outline">Close</Button>
             </DialogClose>
             <Button
-              disabled={!country || !stage || !carClass || !car || !surface || time.length < 9}
+              disabled={
+                !country ||
+                !stage ||
+                !carClass ||
+                !car ||
+                !surface ||
+                time.length < 9 ||
+                loading
+              }
               onClick={() => {
                 const newRace = {
                   id: undefined,
@@ -299,7 +350,14 @@ export const RaceDialog = ({ onConfirm, defaultValue, open, setOpen }: RaceDialo
                 addRace(newRace);
               }}
             >
-              Add
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Adding...
+                </span>
+              ) : (
+                'Add'
+              )}
             </Button>
           </div>
         </DialogFooter>
