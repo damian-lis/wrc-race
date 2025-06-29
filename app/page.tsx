@@ -19,21 +19,32 @@ import { RaceTable } from '@/components/race-table';
 import { Input } from '@/components/ui/input';
 
 export default function Home() {
+  const [hasValidKey, setHasValidKey] = useState<boolean | null>(null); // 🔄 updated
+  const [key, setKey] = useState('');
+
+  /* Check localStorage only **after** the component has mounted (client-side) */
+  useEffect(() => {
+    const ok =
+      typeof window !== 'undefined' && // guard (extra-defensive)
+      window.localStorage.getItem('#$#@!ADas') === process.env.NEXT_PUBLIC_KEY;
+    setHasValidKey(ok);
+  }, []); // 🔄 updated
+
+  const onKeyApply = () => {
+    window.localStorage.setItem('#$#@!ADas', key);
+    // Re-evaluate the key without a full refresh.
+    setHasValidKey(key === process.env.NEXT_PUBLIC_KEY); // 🔄 updated
+  };
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-
   const [raceToUpdate, setRaceToUpdate] = useState<Race>();
 
   const [countryFilter, setCountryFilter] = useState('');
   const [stageFilter, setStageFilter] = useState('');
   const [carClassFilter, setCarClassFilter] = useState('');
   const [carFilter, setCarFilter] = useState('');
-
   const [searchQuery, setSearchQuery] = useState('');
-
-  const hasValidKey =
-    localStorage.getItem('#$#@!ADas') === process.env.NEXT_PUBLIC_KEY;
 
   const clearFilters = () => {
     setCountryFilter('');
@@ -67,9 +78,10 @@ export default function Home() {
     }
   };
 
+  /* Run the fetch only after the key check is complete and valid */
   useEffect(() => {
-    fetchRaces();
-  }, [hasValidKey]);
+    if (hasValidKey) fetchRaces(); // 🔄 updated (guard for `null` or invalid)
+  }, [hasValidKey]); // 🔄 updated
 
   const filters = {
     country: countryFilter,
@@ -79,12 +91,10 @@ export default function Home() {
   };
 
   const filteredRaces = races.filter((race) => {
-    // 1️⃣ all dropdown filters must match (or be empty)
     const matchFilters = Object.entries(filters).every(
       ([key, value]) => !value || race[key as keyof Race] === value,
     );
 
-    // 2️⃣ search must match at least one field
     const q = searchQuery.trim().toLowerCase();
     const matchSearch =
       q === '' ||
@@ -107,21 +117,17 @@ export default function Home() {
     }
   };
 
-  const [key, setKey] = useState('');
-
-  const onKeyApply = () => {
-    localStorage.setItem('#$#@!ADas', key);
-    window.location.reload();
-  };
+  // While checking the key, render nothing (or a spinner/placeholder if you wish)
+  if (hasValidKey === null) return null; // 🔄 updated
 
   if (!hasValidKey)
     return (
       <div className="px-10 pb-10 bg-gray-900 min-h-screen flex justify-center items-center">
-        <div className="w-1/3 flex gap-3">
+        <div className="w-full max-w-md flex gap-3">
           <Input
             value={key}
             onChange={(e) => setKey(e.target.value)}
-            className=" bg-gray-100"
+            className="flex-1 bg-gray-100"
           />
           <Button onClick={onKeyApply}>APPLY</Button>
         </div>
@@ -136,7 +142,7 @@ export default function Home() {
         defaultValue={raceToUpdate}
         onConfirm={fetchRaces}
       />
-      <div className=" px-10 pb-10 bg-gray-900 min-h-screen">
+      <div className="px-10 pb-10 bg-gray-900 min-h-screen">
         <div className="max-w-[1900px] mx-auto">
           <div className="flex justify-end p-8 px-0">
             <Button
@@ -148,6 +154,7 @@ export default function Home() {
               ADD
             </Button>
           </div>
+
           <div className="mb-4">
             <Input
               placeholder="Search..."
@@ -156,6 +163,7 @@ export default function Home() {
               className="w-full bg-gray-200"
             />
           </div>
+
           <div className="flex gap-2 mb-4">
             <Select
               value={countryFilter}
@@ -184,13 +192,11 @@ export default function Home() {
                 <SelectValue placeholder="STAGE" />
               </SelectTrigger>
               <SelectContent>
-                {stagesWithDistancePerCountry.map((item) => {
-                  return (
-                    <SelectItem key={item} value={item}>
-                      {item}
-                    </SelectItem>
-                  );
-                })}
+                {stagesWithDistancePerCountry.map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -229,7 +235,9 @@ export default function Home() {
                 ))}
               </SelectContent>
             </Select>
+
             <Button
+              variant="warning"
               disabled={
                 !countryFilter &&
                 !stageFilter &&
@@ -237,12 +245,12 @@ export default function Home() {
                 !carFilter &&
                 !searchQuery
               }
-              variant="warning"
               onClick={clearFilters}
             >
               RESET
             </Button>
           </div>
+
           <RaceTable
             loading={loading}
             races={filteredRaces}
