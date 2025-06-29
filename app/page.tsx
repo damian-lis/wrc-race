@@ -32,6 +32,9 @@ export default function Home() {
 
   const [searchQuery, setSearchQuery] = useState('');
 
+  const hasValidKey =
+    localStorage.getItem('#$#@!ADas') === process.env.NEXT_PUBLIC_KEY;
+
   const clearFilters = () => {
     setCountryFilter('');
     setStageFilter('');
@@ -66,7 +69,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchRaces();
-  }, []);
+  }, [hasValidKey]);
 
   const filters = {
     country: countryFilter,
@@ -103,6 +106,27 @@ export default function Home() {
       console.error('Error deleting race:', err);
     }
   };
+
+  const [key, setKey] = useState('');
+
+  const onKeyApply = () => {
+    localStorage.setItem('#$#@!ADas', key);
+    window.location.reload();
+  };
+
+  if (!hasValidKey)
+    return (
+      <div className="px-10 pb-10 bg-gray-900 min-h-screen flex justify-center items-center">
+        <div className="w-1/3 flex gap-3">
+          <Input
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+            className=" bg-gray-100"
+          />
+          <Button onClick={onKeyApply}>APPLY</Button>
+        </div>
+      </div>
+    );
 
   return (
     <>
