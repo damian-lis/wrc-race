@@ -4,10 +4,7 @@ import { Race } from '@/types';
 
 type Params = { params: Promise<{ id: string }> };
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function PUT(request: NextRequest, { params }: Params) {
   try {
     const body = await request.json(); // { name, date, … } – no id expected
     if (!body) {
@@ -17,8 +14,8 @@ export async function PUT(
     const redis = getRedisClient();
     const races: Race[] = JSON.parse((await redis.get('races')) ?? '[]');
 
-    const idFromUrl = params.id;
-    const idx = races.findIndex((r) => String(r.id) === String(idFromUrl));
+    const { id } = await params;
+    const idx = races.findIndex((r) => String(r.id) === String(id));
 
     if (idx === -1) {
       return Response.json({ error: 'Race not found' }, { status: 404 });
