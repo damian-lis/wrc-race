@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import { getRedisClient } from '@/lib/redis';
+import { Race } from '@/types';
 
 function formatHeader(key: string) {
   // Insert space before each capital letter, then capitalize each word
@@ -28,7 +29,7 @@ export async function GET() {
       });
     }
 
-    const races = JSON.parse(racesString) as Record<string, unknown>[];
+    const races = JSON.parse(racesString) as Race[];
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const mappedRaces = races.map(({ id: _id, date, ...rest }) => ({
