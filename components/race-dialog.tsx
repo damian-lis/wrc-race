@@ -29,6 +29,7 @@ interface RaceDialogProps {
   defaultValue?: Race;
   setOpen: (open: boolean) => void;
   open: boolean;
+  races: Race[];
 }
 
 export const RaceDialog = ({
@@ -36,6 +37,7 @@ export const RaceDialog = ({
   defaultValue,
   open,
   setOpen,
+  races,
 }: RaceDialogProps) => {
   const [country, setCountry] = useState('');
   const [stage, setStage] = useState('');
@@ -44,7 +46,24 @@ export const RaceDialog = ({
   const [surface, setSurface] = useState('');
   const [time, setTime] = useState('');
 
+  const [existingRace, setExistingRace] = useState<Race | null>(null);
+
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const foundRace = races.find(
+      (race) =>
+        race.country === country &&
+        race.stage === stage &&
+        race.carClass === carClass &&
+        race.car === car &&
+        race.surface === surface,
+    );
+
+    if (foundRace) {
+      setExistingRace(foundRace);
+    }
+  }, [country, stage, carClass, car, surface, races]);
 
   const stagesWithDistancePerCountry = (
     countriesWithStages.find(
@@ -62,6 +81,7 @@ export const RaceDialog = ({
     setCar('');
     setSurface('');
     setTime('');
+    setExistingRace(null);
   };
 
   const addRace = async (race: Race) => {
@@ -128,7 +148,7 @@ export const RaceDialog = ({
     }
   }, [defaultValue, open]);
 
-  if (defaultValue)
+  if (defaultValue || existingRace)
     return (
       <Dialog onOpenChange={setOpen} open={open}>
         <DialogContent>
@@ -149,8 +169,9 @@ export const RaceDialog = ({
           </DialogTitle>
           <div className="mx-auto text-center">
             <div className=" mb-3 mx-auto outline-2 outline-black bg-orange-400 text-black rounded-md px-4 py-1 text-6xl">
-              {defaultValue.time}
+              {(defaultValue || existingRace)?.time}
             </div>
+
             <div className="flex justify-center mt-8">
               <TimeInput
                 value={time}
@@ -159,7 +180,7 @@ export const RaceDialog = ({
               />
             </div>
           </div>
-          <DialogFooter className="pt-4 ">
+          <DialogFooter className="pt-4">
             <div className="flex justify-between w-full">
               <DialogClose asChild>
                 <Button variant="outline">Close</Button>
@@ -168,7 +189,7 @@ export const RaceDialog = ({
                 disabled={time.length < 9 || loading}
                 onClick={() => {
                   const newRace = {
-                    ...defaultValue,
+                    ...(defaultValue || existingRace),
                     country,
                     stage,
                     carClass,
@@ -201,7 +222,7 @@ export const RaceDialog = ({
         <DialogTitle className="mb-3 mx-auto text">Details</DialogTitle>
         <div className="flex items-center gap-x-4">
           <Label className="w-30 max-w-[150px]">Country</Label>
-          {defaultValue ? (
+          {defaultValue || existingRace ? (
             country
           ) : (
             <Select
@@ -226,11 +247,11 @@ export const RaceDialog = ({
         </div>
         <div className="flex items-center gap-x-4">
           <Label className="w-30 max-w-[150px]">Stage</Label>
-          {defaultValue ? (
+          {defaultValue || existingRace ? (
             stage
           ) : (
             <Select
-              disabled={!country || !!defaultValue}
+              disabled={!country || !!(defaultValue || existingRace)}
               value={stage}
               onValueChange={setStage}
             >
@@ -251,11 +272,11 @@ export const RaceDialog = ({
         </div>
         <div className="flex items-center gap-x-4">
           <Label className="w-30 max-w-[150px]">Car class</Label>
-          {defaultValue ? (
+          {defaultValue || existingRace ? (
             carClass
           ) : (
             <Select
-              disabled={!!defaultValue}
+              disabled={!!(defaultValue || existingRace)}
               value={carClass}
               onValueChange={(item) => {
                 setCarClass(item);
@@ -277,11 +298,11 @@ export const RaceDialog = ({
         </div>
         <div className="flex items-center gap-x-4">
           <Label className="w-30 max-w-[150px]">Car</Label>
-          {defaultValue ? (
+          {defaultValue || existingRace ? (
             car
           ) : (
             <Select
-              disabled={!carClass || !!defaultValue}
+              disabled={!carClass || !!(defaultValue || existingRace)}
               value={car}
               onValueChange={setCar}
             >
@@ -300,12 +321,12 @@ export const RaceDialog = ({
         </div>
         <div className="flex items-center gap-x-4">
           <Label className="w-30 max-w-[150px]">Surface</Label>
-          {defaultValue ? (
+          {defaultValue || existingRace ? (
             surface
           ) : (
             <Select
               value={surface}
-              disabled={!!defaultValue}
+              disabled={!!(defaultValue || existingRace)}
               onValueChange={setSurface}
             >
               <SelectTrigger className="w-full">

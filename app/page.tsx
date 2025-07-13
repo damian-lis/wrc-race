@@ -17,6 +17,9 @@ import { RaceDialog } from '@/components/race-dialog';
 import { API_URL } from './constants';
 import { RaceTable } from '@/components/race-table';
 import { Input } from '@/components/ui/input';
+import { downloadFile } from '@/utils/downloadFile';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 export default function Home() {
   const [hasValidKey, setHasValidKey] = useState<boolean | null>(null); // 🔄 updated
@@ -37,6 +40,7 @@ export default function Home() {
   };
   const [races, setRaces] = useState<Race[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [open, setOpen] = useState(false);
   const [raceToUpdate, setRaceToUpdate] = useState<Race>();
 
@@ -141,10 +145,40 @@ export default function Home() {
         setOpen={setOpen}
         defaultValue={raceToUpdate}
         onConfirm={fetchRaces}
+        races={races}
       />
       <div className="px-10 pb-10 bg-gray-900 min-h-screen">
         <div className="max-w-[1900px] mx-auto">
-          <div className="flex justify-end p-8 px-0">
+          <div className="flex justify-between py-8">
+            <Button
+              variant="secondary"
+              disabled={exporting}
+              onClick={async () => {
+                try {
+                  setExporting(true);
+                  await downloadFile('/api/races/export', 'races.xlsx');
+                } catch (err) {
+                  toast.error(
+                    err instanceof Error
+                      ? err.message
+                      : 'Something went wrong',
+                  );
+                } finally {
+                  setExporting(false);
+                }
+              }}
+            >
+              <span className="relative inline-flex items-center justify-center font-bold">
+                <span className={exporting ? 'invisible' : 'visible'}>
+                  EXPORT
+                </span>
+                {exporting && (
+                  <span className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </span>
+                )}
+              </span>
+            </Button>
             <Button
               onClick={() => {
                 setRaceToUpdate(undefined);
