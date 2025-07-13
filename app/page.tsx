@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 
 import {
   Select,
@@ -149,7 +150,7 @@ export default function Home() {
       />
       <div className="px-10 pb-10 bg-gray-900 min-h-screen">
         <div className="max-w-[1900px] mx-auto">
-          <div className="flex justify-between py-8">
+          <div className="flex justify-between items-center">
             <Button
               variant="secondary"
               disabled={exporting}
@@ -179,6 +180,15 @@ export default function Home() {
                 )}
               </span>
             </Button>
+            <div style={{ maxWidth: '300px' }}>
+              <Image
+                src="/image.png"
+                alt="My image"
+                layout="responsive"
+                width={4}
+                height={3}
+              />
+            </div>
             <Button
               onClick={() => {
                 setRaceToUpdate(undefined);
