@@ -7,4 +7,5 @@ export type Race = {
   surface: string;
   time: string;
   date: string;
+  racenet?: string;
 };

@@ -46,13 +46,15 @@ export const RaceTable = ({
     setConfirmingId(null);
   };
 
-  /* ── render ──────────────────────────────────────────── */
   return (
     <div className="relative">
       <Table className="rounded-md overflow-hidden">
         <TableHeader>
           <TableRow>
             <TableHead className="bg-gray-400 text-center font-bold border-1 border-black rounded-tl-md">
+              #
+            </TableHead>
+            <TableHead className="bg-gray-400 text-center font-bold border-1 border-black">
               DATE
             </TableHead>
             <TableHead className="bg-gray-400 text-center font-bold border-1 border-black">
@@ -70,8 +72,12 @@ export const RaceTable = ({
             <TableHead className="bg-gray-400 text-center font-bold border-1 border-black">
               SURFACE
             </TableHead>
+
             <TableHead className="bg-gray-400 text-center font-bold border-1 border-black">
               TIME
+            </TableHead>
+            <TableHead className="bg-gray-400 text-center font-bold border-1 border-black">
+              RACENET
             </TableHead>
             <TableHead className="bg-gray-400 text-center font-bold border-1 border-black w-10 rounded-tr-md" />
           </TableRow>
@@ -93,6 +99,9 @@ export const RaceTable = ({
                     isLastRow ? 'rounded-bl-md' : ''
                   }`}
                 >
+                  {index + 1}
+                </TableCell>
+                <TableCell className="border-1 text-center border-black">
                   {new Date(race.date)
                     .toLocaleDateString('en-GB')
                     .replace(/\//g, '-')}
@@ -112,8 +121,12 @@ export const RaceTable = ({
                 <TableCell className="border-1 text-center border-black">
                   {race.surface}
                 </TableCell>
+
                 <TableCell className="border-1 text-center border-black">
                   {race.time}
+                </TableCell>
+                <TableCell className="border-1 text-center border-black">
+                  {race.racenet ?? '-'}
                 </TableCell>
                 <TableCell
                   className={`border-1 text-center border-black w-10 ${

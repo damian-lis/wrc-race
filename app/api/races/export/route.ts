@@ -31,8 +31,9 @@ export async function GET() {
 
     const races = JSON.parse(racesString) as Race[];
 
+    // Map races and format date
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const mappedRaces = races.map(({ id: _id, date, ...rest }) => ({
+    const mappedRaces = races.map(({ id: _, date, ...rest }) => ({
       ...rest,
       date: new Date(date).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -45,22 +46,28 @@ export async function GET() {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Races');
 
-    // Dynamically derive columns from the first record’s keys
+    // Derive columns — prepend an ordinal column
     const first = mappedRaces[0] ?? {};
-    const keys = Object.keys(first);
-    ws.columns = Object.keys(first).map((key) => ({
-      header: formatHeader(key), // formatted column header
-      key, // property name in each row object
-      width: 20, // default width
-    }));
+    const keys = ['no', ...Object.keys(first)];
 
-    // Add every race as a row
-    mappedRaces.forEach((race) => ws.addRow(race));
+    ws.columns = [
+      { header: '#', key: 'no', width: 6 }, // ordinal column
+      ...Object.keys(first).map((key) => ({
+        header: formatHeader(key),
+        key,
+        width: 20,
+      })),
+    ];
+
+    // Add every race as a row, injecting the ordinal value
+    mappedRaces.forEach((race, index) =>
+      ws.addRow({ no: index + 1, ...race }),
+    );
 
     // Color palette for columns (can extend or change)
     const columnColors = ['FFEBEE', 'E8F5E9', 'E3F2FD', 'FFF3E0', 'F3E5F5']; // soft pastel colors
 
-    // Apply styles to each column
+    // Apply styles to each column (now includes ordinal column)
     keys.forEach((_, colIndex) => {
       const color = columnColors[colIndex % columnColors.length]; // loop if more cols than colors
       let maxLength = 10; // Minimum width fallback
@@ -102,7 +109,7 @@ export async function GET() {
     ws.getRow(1).height = 25;
 
     // 3️⃣  Turn the workbook into a Node buffer
-    const buffer = await wb.xlsx.writeBuffer(); // ExcelJS ≥4.0   [oai_citation:0‡GitHub](https://github.com/exceljs/exceljs)
+    const buffer = await wb.xlsx.writeBuffer();
 
     // 4️⃣  Return the file with download headers
     return new Response(buffer, {
@@ -111,7 +118,6 @@ export async function GET() {
         'Content-Type':
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': 'attachment; filename="races.xlsx"',
-        // Optional: tell browsers this is binary
         'Content-Length': buffer.byteLength.toString(),
       },
     });

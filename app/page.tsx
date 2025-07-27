@@ -149,7 +149,7 @@ export default function Home() {
         races={races}
       />
       <div className="px-10 pb-10 bg-gray-900 min-h-screen">
-        <div className="max-w-[1900px] mx-auto">
+        <div className="max-w-[3000px] mx-auto">
           <div className="flex justify-between items-center">
             <Button
               variant="secondary"
