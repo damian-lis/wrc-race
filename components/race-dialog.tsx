@@ -23,8 +23,7 @@ import { useEffect, useState } from 'react';
 import { Race } from '@/types';
 import { categoriesWithCars, countriesWithStages } from '@/app/data';
 import { API_URL } from '@/app/constants';
-import { Checkbox } from './ui/checkbox';
-import { twMerge } from 'tailwind-merge';
+import { Input } from './ui/input';
 
 interface RaceDialogProps {
   onConfirm: () => void;
@@ -48,8 +47,6 @@ export const RaceDialog = ({
   const [surface, setSurface] = useState('');
   const [time, setTime] = useState('');
   const [racenet, setRacenet] = useState('');
-
-  const [onlyUpdateRacenet, setOnlyUpdateRacenet] = useState(false);
 
   const [existingRace, setExistingRace] = useState<Race | null>(null);
 
@@ -180,46 +177,20 @@ export const RaceDialog = ({
           </DialogTitle>
           <div className="mx-auto text-center  bg-blue-200 p-5 rounded-2xl">
             <span className="text-2xl font-bold">RACENET</span>
-            <div className="flex justify-center mt-2">
-              <TimeInput value={racenet} onChange={setRacenet} />
-            </div>
-            <div className="flex mt-2">
-              <div className="flex items-center gap-3 text-2xl mx-auto">
-                <Checkbox
-                  id="updateRacenet"
-                  onCheckedChange={(checked) => {
-                    setOnlyUpdateRacenet(!!checked);
-                  }}
-                  checked={onlyUpdateRacenet}
-                  size="lg"
-                />
-                <Label className="text-lg" htmlFor="updateRacenet">
-                  Only update racenet
-                </Label>
-              </div>
-            </div>
+            <Input
+              className="mx-auto mt-2 max-w-[250px]"
+              onChange={(e) => setRacenet(e.target.value)}
+              value={racenet}
+              maxLength={7}
+            />
           </div>
-          <div
-            className={twMerge(
-              'mx-auto text-center mt-3 p-5 rounded-2xl',
-              onlyUpdateRacenet ? 'bg-gray-200 opacity-50' : 'bg-orange-300',
-            )}
-          >
+          <div className="mx-auto text-center mt-1 p-5 rounded-2xl bg-orange-300">
             <span className="text-2xl font-bold">YOUR TIME</span>
-            <div
-              className={twMerge(
-                'mt-3 mb-3 mx-auto   text-black rounded-md px-4 py-1 text-6xl',
-                onlyUpdateRacenet ? 'bg-gray-300 opacity-50' : 'bg-orange-200',
-              )}
-            >
+            <div className="mt-3 mb-3 mx-auto   text-black rounded-md px-4 py-1 text-6xl bg-orange-200">
               {(defaultValue || existingRace)?.time}
             </div>
             <div className="flex justify-center mt-5 ">
-              <TimeInput
-                disabled={onlyUpdateRacenet}
-                value={time}
-                onChange={setTime}
-              />
+              <TimeInput value={time} onChange={setTime} />
             </div>
             {time.length === 9 &&
               (areTimesEqual ? (
@@ -240,11 +211,7 @@ export const RaceDialog = ({
                 <Button variant="outline">Close</Button>
               </DialogClose>
               <Button
-                disabled={
-                  (onlyUpdateRacenet && racenet.length < 9) ||
-                  (!onlyUpdateRacenet && (time.length < 9 || !isBetterTime)) ||
-                  loading
-                }
+                disabled={time.length < 9 || !isBetterTime || loading}
                 onClick={() => {
                   const newRace = {
                     ...(defaultValue || existingRace),
@@ -253,10 +220,8 @@ export const RaceDialog = ({
                     carClass,
                     surface,
                     car,
-                    time: onlyUpdateRacenet
-                      ? (defaultValue || existingRace)?.time || ''
-                      : time,
-                    racenet: racenet.length === 9 ? racenet : undefined,
+                    time,
+                    racenet,
                     date: new Date().toISOString(),
                   };
                   editRace(newRace);
@@ -400,18 +365,19 @@ export const RaceDialog = ({
             </Select>
           )}
         </div>
-        <div>
-          <div className="flex items-center gap-x-4">
-            <Label className="w-30 max-w-[150px]">Time</Label>
-            <div className="flex gap-5 items-center ">
-              <TimeInput smallInput value={time} onChange={setTime} />
-            </div>
-          </div>
-          <div className="flex items-center gap-x-4 ">
-            <Label className="w-30 max-w-[150px]">Racenet</Label>
-            <div className="flex gap-5 items-center ">
-              <TimeInput smallInput value={racenet} onChange={setRacenet} />
-            </div>
+        <div className="flex items-center gap-x-4">
+          <Label className="w-30 max-w-[150px]">Racenet</Label>
+          <Input
+            className="md:text-sm h-9 max-w-[160px]"
+            onChange={(e) => setRacenet(e.target.value)}
+            value={racenet}
+            maxLength={7}
+          />
+        </div>
+        <div className="flex items-center gap-x-4">
+          <Label className="w-30 max-w-[150px]">Time</Label>
+          <div className="flex gap-5 items-center ">
+            <TimeInput smallInput value={time} onChange={setTime} />
           </div>
         </div>
         <DialogFooter className="pt-4">
