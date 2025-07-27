@@ -241,6 +241,7 @@ export const RaceDialog = ({
               </DialogClose>
               <Button
                 disabled={
+                  (onlyUpdateRacenet && racenet.length < 9) ||
                   (!onlyUpdateRacenet && (time.length < 9 || !isBetterTime)) ||
                   loading
                 }
@@ -255,7 +256,7 @@ export const RaceDialog = ({
                     time: onlyUpdateRacenet
                       ? (defaultValue || existingRace)?.time || ''
                       : time,
-                    racenet,
+                    racenet: racenet.length === 9 ? racenet : undefined,
                     date: new Date().toISOString(),
                   };
                   editRace(newRace);
